@@ -20,7 +20,8 @@ WHERE t.kind_id = 1
   AND mi.info_type_id = 3
   AND mii.info_type_id = 101
   AND mii2.info_type_id = 100
-  AND mii2.info > 100000
+  AND mii2.info > 10000
+  AND t.production_year >1919
 GROUP BY t.production_year
 ORDER BY t.production_year desc;
 "
@@ -29,7 +30,7 @@ best_movies <- db %>%
 
 glimpse(best_movies)
 
-ggplot(best_movies, aes(x = production_year, y = rating, color = factor(rating))) +
+ggplot(best_movies, aes(x = production_year, y = rating, color = factor(genre))) +
   geom_point()
 
 ```
