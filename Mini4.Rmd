@@ -11,14 +11,16 @@ library(RMySQL)
 db <- dbConnect_scidb(dbname = "imdb")
 
 sql <- "
-SELECT t.id, t.title, t.production_year, MAX(mii.info) AS rating, mii2.info AS votes
+SELECT t.id, t.title, t.production_year, MAX(mii.info) AS rating, mii2.info AS votes, mi.info AS genre
 FROM title t
 JOIN movie_info_idx mii ON mii.movie_id = t.id
 JOIN movie_info_idx mii2 ON mii2.movie_id = t.id
+JOIN movie_info mi ON mi.movie_id=t.id
 WHERE t.kind_id = 1
+  AND mi.info_type_id = 3
   AND mii.info_type_id = 101
   AND mii2.info_type_id = 100
-  AND mii2.info > 10000
+  AND mii2.info > 100000
 GROUP BY t.production_year
 ORDER BY t.production_year desc;
 "
