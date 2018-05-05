@@ -1,0 +1,32 @@
+---
+title: "Mini Project 4"
+author: "Jemimah Charles"
+date: "April 18, 2018"
+output: html_document
+---
+
+```{r}
+library(mdsr)
+library(RMySQL)
+db <- dbConnect_scidb(dbname = "imdb")
+
+sql <- "
+SELECT t.id, t.title, t.production_year, mii.info AS votes, mii2.info AS rating
+FROM title t
+JOIN movie_info_idx mii ON mii.movie_id = t.id
+JOIN movie_info_idx mii2 ON mii2.movie_id = t.id
+WHERE t.kind_id = 1
+  AND mii.info_type_id = 100
+  AND mii2.info_type_id = 101
+  AND mii.info > 100000
+ORDER BY mii2.info desc;
+"
+best_movies <- db %>%
+  dbGetQuery(sql)
+
+glimpse(best_movies)
+
+ggplot(best_movies, aes(x = production_year, y = rating, color = factor(rating))) +
+  geom_point()
+
+```
