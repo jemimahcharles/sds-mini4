@@ -22,13 +22,12 @@ WHERE t.kind_id = 1
   AND mii2.info_type_id = 100
   AND mii2.info > 10000
   AND t.production_year >1919
-GROUP BY t.production_year
-ORDER BY t.production_year desc;
+GROUP BY t.production_year;
 "
 best_movies <- db %>%
   dbGetQuery(sql)
 
-glimpse(best_movies)
+head(best_movies)
 
 ggplot(best_movies, aes(x = production_year, y = rating, color = factor(genre))) +
   geom_point()
