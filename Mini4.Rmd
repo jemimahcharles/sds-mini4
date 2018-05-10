@@ -31,6 +31,7 @@ best_movies2 <- db %>%
   dbGetQuery(sql_gross)
 
 head(best_movies2)
+glimpse(best_movies2)
 
 sql_vote <- "
 SELECT t.id, t.title, t.production_year, MAX(mii.info) AS rating, mii2.info AS votes, mi.info AS genre
