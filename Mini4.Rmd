@@ -1,38 +1,36 @@
 ---
-title: "Mini Project 4"
-author: "Jemimah Charles"
+title: "Movies for Money or Art?"
+author: "Jemimah Charles and Maria De Villeneuve"
 date: "April 18, 2018"
 output: 
  html_document:
     code_folding: hide
 ---
+## Movies for Money or Art?
+
+We decided to work on the imdb database, using a github repository[^1], as we were curious to see what lead to the success of a film and more specifically if nowadays movies are being made to make money or to make art. We were interested in the era of Weimar film and wanted to know which were the most successful films, both financially and voting wise. By successful, it will either mean making the most money or have the highest rating. Weimar film is one of the pivotal times in film. Even today it still influences how directors cut and create scenes. It is implausible to calculate which movies are most popular and influenced by the Weimar era. But it isn’t implausible to see what genres influence the rating and gross income. 
+
+In the era of Weimar film people went to see films in groups to feel a sense of community. As there were limited films being produced during this time period, they didn’t have many options. However today, there are massive quantities of films being produced every year. It is important to see if genres influence what is being made. Groups today consist of people on dates and small groups of friends. Therefore, more date-friendly movies such as Action, Comedy and Drama would be the most popular and therefore the highest grossing, whereas Documentaries and Biographies would be the highest rated as it is expected that movies that have more depth will have higher praise. 
+
+The selection process for selecting the highest rated movie for every year since 1920  was solely based on the average rating, where the film had to have at least 10,000 reviews. Then going on to find the genre in order to see if there was a correlation between the type of movie and how highly rated it was. It was important to filter for over 10 000 reviews as originally movies with only a couple high reviews were making it to the top of the list. However, these films were not popular, contained many ratings and were not particularly well known. As can be seen in the graph, “Movie Genres from 1920 through 2017”, there are indeed more popular genres that lead to better ratings. However, these are not what was predicted before! The three highest rated, in descending order as seen in the data set, genre_rated, were Comedy, followed by Drama and then Adventure. This was the hypothesis for the highest grossing films, since it was supposed that those would be the ones people go to see more often but not always considered to be intelligent and award-worthy. Yet, those that were found to be the highest grossing ones were Drama, Comedy and Action, as seen in the data set, genre_grossed. This was expected since these are the movies that often are the easiest, lightest content wise and most community-friendly to watch. 
+
+What is interesting to note is that Comedy moved from second to first place from highest grossing to highest rated. Drama on the other hand went from second to first place from highest rated to highest grossing. Therefore, while it seems people will go see dramatic movies more often, it doesn’t correlate to higher ratings. People won’t necessarily find them better than comedies. It seems like laughter is still a more relevant factor than tears to make people enjoy a movie. This begs to question the validity of that statement. 
+
+When looking into the 98 years of film observed, it’s important to see what genres were better rated. The appreciation for Fantasy was very short lived and seems to be the best rated in 1920 and 1921, and so were Horror, Documentary and Thriller. Those mentioned before only appeared to be the best rated in 1929 for Documentary, 1941 for Thriller and 1980 and 1981 for Horror. Whereas for Crime, Action, Adventure, Comedy, Biography and Drama it seems to be protracted evenly throughout the rest of the years analyzed. Drama, on the other hand fared better in the earlier years which is potentially why it ended up falling to second best rated after Comedy, which was strongly rated all throughout the years. Next, it is important to look at what genres were the highest grossing per year in order to compare to the ones that were highest rated. Surprisingly, most of the genres only had one or two occurences of being highest grossing except for Drama and Comedy which were the most consistent throughout the years, and Action that quickly rose in gross income after 1981. 
+
+Perhaps the reason that Comedy was number one in terms of rating but second in highest grossing could be because Comedy is often censored globally. The biggest market of movies is Hollywood produced films, making them very American centric. This means that Hollywood’s Comedies aren’t always very culturally sensitive and might not appeal to everyone, opening up the possibility of the film being censored in an entire country. This would mean that less people would see these movies which would explain why Comedy is in second place in terms of highest grossing. However, this would also mean that the people who did see it were a select group that it was catered to. This could explain why the ratings for Comedy are the highest even though it isn’t the highest grossing. Voting also requires internet which isn’t accessible to everyone.
+
+The fact that Action movies rose so fast in the the data set, best_grossed, after 1981 shows that people started producing what sells. Especially because in terms of quantity the highest grossing movies are the genres that are the most commonly found. Additionally, within the highest rated genres, it isn’t the well thought through art pieces we expected to find, it’s mostly popular entertainment. All these elements seem to show that nowadays movies are indeed being made for money and unfortunately not for art. 
 
 ```{r, warning = FALSE, message = FALSE}
 library(mdsr)
 library(RMySQL)
+library(plyr)
 
 #Data set imdb used for both queries
 db <- dbConnect_scidb(dbname = "imdb")
 
-#gets the top grossed films per year since 1920, ordered by 
-sql_gross <- "
-SELECT t.id, t.title, t.production_year, MAX(mi2.info) AS gross_info, mi.info AS genre
-FROM title t
-JOIN movie_info mi2 ON mi2.movie_id = t.id
-JOIN movie_info mi ON mi.movie_id=t.id
-WHERE t.kind_id = 1
-  AND mi.info_type_id = 3
-  AND mi2.info_type_id = 107
-  AND t.production_year >1919
-GROUP BY t.production_year
-ORDER BY t.production_year;
-"
-best_movies2 <- db %>%
-  dbGetQuery(sql_gross)
-
-head(best_movies2)
-glimpse(best_movies2)
-
+#All of the highest rated movies per year since 1920. This uses an index to find the votes and genre of films. It also makes sure the films have above a certain amount of votes. 
 sql_vote <- "
 SELECT t.id, t.title, t.production_year, MAX(mii.info) AS rating, mii2.info AS votes, mi.info AS genre
 FROM title t
@@ -47,16 +45,44 @@ WHERE t.kind_id = 1
   AND t.production_year >1919
 GROUP BY t.production_year;
 "
-best_movies <- db %>%
+#Put the SQL query into a data set
+best_rated <- db %>%
   dbGetQuery(sql_vote)
 
-head(best_movies)
+#Total amount of each genre
+"Best Rated Films: genre_rated"
+genre_rated <- count(best_rated, "genre")
+genre_rated
 
-ggplot(best_movies, aes(x = production_year, y = rating, color = factor(genre))) +
-  geom_point()+
-  facet_wrap(~genre)
+#gets the top grossed films per year since 1920, ordered by production year. This uses an index to find the gross income and genre
+sql_gross <- "
+SELECT t.id, t.title, t.production_year, MAX(mi2.info) AS gross_info, mi.info AS genre
+FROM title t
+JOIN movie_info mi2 ON mi2.movie_id = t.id
+JOIN movie_info mi ON mi.movie_id=t.id
+WHERE t.kind_id = 1
+  AND mi.info_type_id = 3
+  AND mi2.info_type_id = 107
+  AND t.production_year >1919
+GROUP BY t.production_year
+ORDER BY t.production_year;
+"
 
-ggplot(best_movies2, aes(x = production_year, y = gross_info, color = factor(genre))) +
+#Put the SQL query into a data set
+best_grossed <- db %>%
+  dbGetQuery(sql_gross)
+
+#Total amount of each genre
+"Best Grossed Films: genre_grossed"
+genre_grossed <- count(best_grossed, "genre")
+genre_grossed
+
+#graph to plot ratings to see how the different genres fared over the years
+ggplot(best_rated, aes(x = production_year, y = rating, color = factor(genre))) +
   geom_point()+
-  facet_wrap(~genre)
+  facet_wrap(~genre)+
+  labs(title = "Movie Genres from 1920 through 2017",x = "Production Year (1920-2017)", y = "Rating (1-10)", color = "Genre") +
+  theme_bw()
 ```
+
+[^1]: https://github.com/jemimahcharles/sds-mini4.git
